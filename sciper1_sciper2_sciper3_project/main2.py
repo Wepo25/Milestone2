@@ -7,7 +7,7 @@ from src.data import load_data
 from src.methods.dummy_methods import DummyClassifier
 from src.methods.pca import PCA
 from src.methods.deep_network import MLP, CNN, Trainer
-from src.utils import normalize_fn, append_bias_term, accuracy_fn, macrof1_fn, get_n_classes
+from src.utils import normalize_fn, append_bias_term, accuracy_fn, macrof1_fn, get_n_classes, split_train_test
 
 
 def main(args):
@@ -21,8 +21,10 @@ def main(args):
     """
     ## 1. First, we load our data and flatten the images into vectors
     xtrain, xtest, ytrain, ytest = load_data(args.data)
+    # 80     20     80       20
     xtrain = xtrain.reshape(xtrain.shape[0], -1)
     xtest = xtest.reshape(xtest.shape[0], -1)
+    data_size = len(xtrain) + len(xtest)
 
 
     ## 2. Then we must prepare it. This is were you can create a validation set,
@@ -30,8 +32,15 @@ def main(args):
 
     # Make a validation set
     if not args.test:
-        ### WRITE YOUR CODE HERE
-        pass
+        xtrain, xtest, ytrain, ytest = split_train_test(
+            xtrain, ytrain, test_size=0.2)
+
+    print(
+        f"[INFO] Data loaded: xtrain.shape = {xtrain.shape} - ytrain.shape = {ytrain.shape}")
+    print(
+        f"[INFO] Data loaded: xtest.shape = {xtest.shape} - ytest.shape = {ytest.shape}")
+    print(
+        f"[INFO] Data composition: train = {len(xtrain)/data_size:.2f} - test = {len(xtest)/data_size:.2f}")
     
     ### WRITE YOUR CODE HERE to do any other data processing
 
