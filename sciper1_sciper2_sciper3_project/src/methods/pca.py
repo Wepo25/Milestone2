@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 
 ## MS2
 
@@ -24,6 +25,7 @@ class PCA(object):
         self.mean = None 
         # the principal components (will be computed from the training data and saved to this variable)
         self.W = None
+        print("[INFO] PCA initialized with d = {}".format(self.d))
 
     def find_principal_components(self, training_data):
         """
@@ -38,12 +40,40 @@ class PCA(object):
         Returns:
             exvar (float): explained variance of the kept dimensions (in percentage, i.e., in [0,100])
         """
-        ##
-        ###
-        #### WRITE YOUR CODE HERE! 
-        ###
-        ##
-        return exvar
+        # Setup
+        print("[INFO] Finding principal components...")
+        training_data = training_data.astype(float)
+        dimension = training_data.shape[1]
+        #print("[INFO] Training data #samples: {}, #dimensions: {} -> images of shape {}".format(training_data.shape[0], training_data.shape[1], (int(np.sqrt(training_data.shape[1])), int(np.sqrt(training_data.shape[1])))))
+        training_data = (training_data - np.mean(training_data, axis=0)) / np.std(training_data, axis=0)
+        
+        # Compute the covariance matrix and eigenvecs
+        covariance_matrix = np.cov(training_data.T)
+        eigenvalues, eigenvectors = np.linalg.eig(covariance_matrix)
+
+        # Prepare for usage
+        sorted_indices = np.argsort(eigenvalues)[::-1]
+        sorted_eigenvalues = eigenvalues[sorted_indices]
+        sorted_eigenvectors = eigenvectors[:, sorted_indices]
+
+        # Save the mean and the principal components
+        self.mean = np.mean(training_data, axis=0)
+        self.W = sorted_eigenvectors[:, :self.d]
+
+        # Compute cummulatives
+        total_variance = np.sum(sorted_eigenvalues)
+        cumulative_explained_variance = np.cumsum(sorted_eigenvalues) / total_variance * 100
+
+        # Plot cumulative explained variance
+        plt.plot(cumulative_explained_variance)
+        plt.xlabel('Number of components')
+        plt.ylabel('Cumulative explained variance')
+        plt.plot(self.d, cumulative_explained_variance[self.d - 1], 'ro')
+        plt.show()
+
+        # Output the explained variance
+        print("[INFO] Explained variance of the kept {} dimensions: {}%".format(self.d, cumulative_explained_variance[self.d - 1]))
+        return cumulative_explained_variance[self.d - 1]
 
     def reduce_dimension(self, data):
         """
@@ -54,11 +84,12 @@ class PCA(object):
         Returns:
             data_reduced (array): reduced data of shape (N,d)
         """
-        ##
-        ###
-        #### WRITE YOUR CODE HERE! 
-        ###
-        ##
+        # Setup
+        print("[INFO] Reducing dimensionality...")
+        data = data.astype(float)
+        data = (data - self.mean) / np.std(data, axis=0)
+        data_reduced = np.dot(data, self.W)
+        print("[INFO] Data reduced to shape {}".format(data_reduced.shape))
         return data_reduced
         
 

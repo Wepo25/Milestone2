@@ -1,10 +1,14 @@
 import argparse
 
 import numpy as np
+import random as rd
 from torchinfo import summary
-
+from mpl_toolkits import mplot3d
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 from src.data import load_data
 from src.methods.dummy_methods import DummyClassifier
+from src.methods.logistic_regression import LogisticRegression
 from src.methods.pca import PCA
 from src.methods.deep_network import MLP, CNN, Trainer
 from src.utils import normalize_fn, append_bias_term, accuracy_fn, macrof1_fn, get_n_classes, split_train_test
@@ -47,12 +51,56 @@ def main(args):
 
     # Dimensionality reduction (MS2)
     if args.use_pca:
-        print("Using PCA")
+        # PCA for plot
+        pca_obj = PCA(d=3)
+        pca_obj.find_principal_components(xtrain)
+        xtrain_plot = pca_obj.reduce_dimension(xtrain)
+        xtest_plot = pca_obj.reduce_dimension(xtest)
+        fig = plt.figure()
+        ax = plt.axes(projection='3d')
+        colors = [color for color in mcolors.CSS4_COLORS]
+        rd.shuffle(colors)
+        for i, point in enumerate(xtest_plot):
+            ax.scatter3D(point[0], point[1], point[2], color=colors[ytest[i]])
+        plt.show()
+
+        # PCA for classification
         pca_obj = PCA(d=args.pca_d)
+        pca_obj.find_principal_components(xtrain)
+        xtrain = pca_obj.reduce_dimension(xtrain)
+        xtest = pca_obj.reduce_dimension(xtest)
         ### WRITE YOUR CODE HERE: use the PCA object to reduce the dimensionality of the data
 
 
     ## 3. Initialize the method you want to use.
+    if args.method == "logistic_regression":
+        if not args.test:  # use the validation to find the best lr
+            # 20 values between 10^-6 and 10^0
+            learning_rates = np.logspace(-6, 0, 20)
+            accuracies = []
+            for lr in learning_rates:
+                model = LogisticRegression(lr=lr, max_iters=args.max_iters)
+                model.fit(xtrain, ytrain)
+                preds = model.predict(xtest)
+                acc = accuracy_fn(preds, ytest)
+                accuracies.append(acc)
+            best_lr = learning_rates[np.argmax(accuracies)]
+            print(f"Best learning rate: {best_lr}")
+
+        if args.test:  # Train k-means model using best k on 20 iteration to find the best among random start
+            best_lr = args.lr
+            model = LogisticRegression(lr=best_lr, max_iters=args.max_iters)
+            preds_train = model.fit(xtrain, ytrain)
+            acc = accuracy_fn(preds_train, ytrain)
+            macrof1 = macrof1_fn(preds_train, ytrain)
+            print(
+                f"\nTrain set: accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
+
+            preds = model.predict(xtest)
+            acc = accuracy_fn(preds, ytest)
+            macrof1 = macrof1_fn(preds, ytest)
+            print(
+                f"Test set:  accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
 
     # Neural Networks (MS2)
     if args.method == "nn":
@@ -78,25 +126,25 @@ def main(args):
         method_obj =  DummyClassifier(arg1=1, arg2=2)
     
 
-    ## 4. Train and evaluate the method
+    # ## 4. Train and evaluate the method
 
-    # Fit (:=train) the method on the training data
-    preds_train = method_obj.fit(xtrain, ytrain)
+    # # Fit (:=train) the method on the training data
+    # preds_train = method_obj.fit(xtrain, ytrain)
         
-    # Predict on unseen data
-    preds = method_obj.predict(xtest)
+    # # Predict on unseen data
+    # preds = method_obj.predict(xtest)
 
 
-    ## Report results: performance on train and valid/test sets
-    acc = accuracy_fn(preds_train, ytrain)
-    macrof1 = macrof1_fn(preds_train, ytrain)
-    print(f"\nTrain set: accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
+    # ## Report results: performance on train and valid/test sets
+    # acc = accuracy_fn(preds_train, ytrain)
+    # macrof1 = macrof1_fn(preds_train, ytrain)
+    # print(f"\nTrain set: accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
 
-    acc = accuracy_fn(preds, ytest)
-    macrof1 = macrof1_fn(preds, ytest)
-    print(f"Test set:  accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
+    # acc = accuracy_fn(preds, ytest)
+    # macrof1 = macrof1_fn(preds, ytest)
+    # print(f"Test set:  accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
 
-    ### WRITE YOUR CODE HERE if you want to add other outputs, visualization, etc.
+    # ### WRITE YOUR CODE HERE if you want to add other outputs, visualization, etc.
 
 
 if __name__ == '__main__':
@@ -127,3 +175,4 @@ if __name__ == '__main__':
     # which can be accessed as "args.data", for example.
     args = parser.parse_args()
     main(args)
+
