@@ -101,6 +101,7 @@ def main(args):
 
     # Neural Networks (MS2)
     if args.method == "nn":
+
         print("Using deep network")
 
         # Prepare the model (and data) for Pytorch
@@ -110,12 +111,58 @@ def main(args):
             model = ...  # WRITE YOUR CODE HERE
 
         elif args.nn_type == "cnn":
-            # WRITE YOUR CODE HERE
             xtrain = xtrain.reshape(xtrain.shape[0], 1, 32, 32)
             xtest = xtest.reshape(xtest.shape[0], 1, 32, 32)
-            model = CNN(1, n_classes)
 
-        summary(model)
+            if not args.test:  # use the validation to find the best lr
+
+                filters = [(2, 4, 8), (4, 8, 16), (5, 10, 20),
+                           (10, 20, 40), (16, 32, 64), (32, 64, 128)]
+                train_acc = np.empty(len(filters))
+                val_acc = np.empty(len(filters))
+
+                for it, filter in enumerate(filters):
+                    print("Running one filter version of CNN with filter size:", filter)
+                    # Model fit and train
+                    model = CNN(xtrain.shape[1], n_classes, filters=filter)
+                    method_obj = Trainer(
+                        model, lr=args.lr, epochs=args.max_iters, batch_size=args.nn_batch_size)
+                    # Model prediction
+                    preds_train = method_obj.fit(xtrain, ytrain)
+                    train_acc[it] = accuracy_fn(preds_train, ytrain)
+                    preds_val = method_obj.predict(xtrain)
+                    val_acc[it] = accuracy_fn(preds_val, ytrain)
+
+                bestModel = np.argmax(val_acc)
+                print("Train accuracy = ", train_acc)
+                print("Validation accuracy = ", val_acc)
+
+                plt.plot(train_acc, color="blue", marker='x')
+                plt.xticks(range(len(filters)), labels=[
+                           '(2,4,8)', '(4,8,16)', '(5,10,20)', '(10, 20, 40)', '(16, 32, 64)', '(32, 64, 128)'])
+                plt.title("CNN training accuracies")
+                plt.xlabel('Filters')
+                plt.ylabel('Accuracy')
+                plt.legend()
+                plt.savefig('trainingaccuracies.png')
+                plt.show()
+
+                plt.plot(val_acc, color="red", marker='o')
+                plt.xticks(range(len(filters)), labels=[
+                           '(2,4,8)', '(4,8,16)', '(5,10,20)', '(10, 20, 40)', '(16, 32, 64)', '(32, 64, 128)'])
+                plt.title("CNN validation accuracies")
+                plt.ylabel('Accuracy')
+                plt.xlabel('Filters')
+                plt.legend()
+                plt.savefig('validationaccuracies.png')
+                plt.show()
+                model = CNN(xtrain.shape[1], n_classes,
+                            filters=filters[bestModel])
+                summary(model)
+
+            else:
+                model = CNN(1, n_classes)
+                summary(model)
 
         # Trainer object
         method_obj = Trainer(
@@ -125,24 +172,24 @@ def main(args):
     elif args.method == "dummy_classifier":
         method_obj = DummyClassifier(arg1=1, arg2=2)
 
-    # ## 4. Train and evaluate the method
+    # 4. Train and evaluate the method
 
-    # # Fit (:=train) the method on the training data
-    # preds_train = method_obj.fit(xtrain, ytrain)
+    # Fit (:=train) the method on the training data
+    preds_train = method_obj.fit(xtrain, ytrain)
 
-    # # Predict on unseen data
-    # preds = method_obj.predict(xtest)
+    # Predict on unseen data
+    preds = method_obj.predict(xtest)
 
-    # ## Report results: performance on train and valid/test sets
-    # acc = accuracy_fn(preds_train, ytrain)
-    # macrof1 = macrof1_fn(preds_train, ytrain)
-    # print(f"\nTrain set: accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
+    # Report results: performance on train and valid/test sets
+    acc = accuracy_fn(preds_train, ytrain)
+    macrof1 = macrof1_fn(preds_train, ytrain)
+    print(f"\nTrain set: accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
 
-    # acc = accuracy_fn(preds, ytest)
-    # macrof1 = macrof1_fn(preds, ytest)
-    # print(f"Test set:  accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
+    acc = accuracy_fn(preds, ytest)
+    macrof1 = macrof1_fn(preds, ytest)
+    print(f"Test set:  accuracy = {acc:.3f}% - F1-score = {macrof1:.6f}")
 
-    # ### WRITE YOUR CODE HERE if you want to add other outputs, visualization, etc.
+    # WRITE YOUR CODE HERE if you want to add other outputs, visualization, etc.
 
 
 if __name__ == '__main__':
