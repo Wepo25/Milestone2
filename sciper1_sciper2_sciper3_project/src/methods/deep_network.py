@@ -11,7 +11,7 @@ class MLP(nn.Module):
 
     It should not use any convolutional layers.
     """
-
+ 
     def __init__(self, input_size, n_classes):
         """
         Initialize the network.
