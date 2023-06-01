@@ -1,3 +1,4 @@
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,7 +13,7 @@ class MLP(nn.Module):
     It should not use any convolutional layers.
     """
  
-    def __init__(self, input_size, n_classes):
+    def __init__(self, input_size, n_classes, nbLayer = 3 , activationFunction = F.relu):
         """
         Initialize the network.
 
@@ -29,6 +30,34 @@ class MLP(nn.Module):
         # WRITE YOUR CODE HERE!
         ###
         ##
+        self.input_size = input_size
+        self.activationFunction = activationFunction
+        self.n_classes = n_classes
+        self.nbForward = nbLayer -1 
+        
+        self.layerDim = [0] * nbLayer
+
+        self.layerDim[0] = input_size
+
+        for i in range(1, nbLayer -1) :
+            self.layerDim[i] = 2048
+
+        self.layerDim[-1] = n_classes
+
+        self.layer = [nn.Linear] * (self.nbForward)
+
+        for i in range(self.nbForward): 
+            self.layer[i] = nn.Linear(self.layerDim[i], self.layerDim[i+1])
+
+         
+
+        self.params = nn.ParameterList(self.layer)
+        print(self.layer)
+
+
+
+
+        
 
     def forward(self, x):
         """
@@ -45,6 +74,11 @@ class MLP(nn.Module):
         # WRITE YOUR CODE HERE!
         ###
         ##
+        for j in range(self.nbForward-1):
+            print(j)
+            x = self.activationFunction(self.layer[j](x))
+
+        preds = self.layer[self.nbForward-1](x)
         return preds
 
 
@@ -93,6 +127,7 @@ class CNN(nn.Module):
             prev_channels = filter_size
 
         self.linears = nn.ModuleList()
+
         prev_size = filters[-1] * ((image_width_height //
                                    (max_pooling_kernel ** len(filters))) ** 2)
         for linear_size in linear_layers_size:

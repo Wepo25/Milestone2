@@ -2,6 +2,9 @@ import argparse
 
 import numpy as np
 import random as rd
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from torchinfo import summary
 from mpl_toolkits import mplot3d
 import matplotlib.pyplot as plt
@@ -108,9 +111,39 @@ def main(args):
         # Note: you might need to reshape the image data depending on the network you use!
         n_classes = get_n_classes(ytrain)
         if args.nn_type == "mlp":
-            model = ...  # WRITE YOUR CODE HERE
+            nb_hidden = 20
+            xtrain = xtrain.reshape(xtrain.shape[0], -1)
+            xtest = xtest.reshape(xtest.shape[0], -1)
 
-        elif args.nn_type == "cnn":
+            if not args.test:
+                tab = [F.relu, F.tanh, F.sigmoid]
+                train_acc = np.empty(len(tab) * nb_hidden)
+                val_acc = np.empty(len(tab) * nb_hidden)  # use the validation to find the best lr
+                
+                for i in range(len(tab)):
+                    for j in range(3 ,nb_hidden): # number of hideen layer maybe add a command line argument for this
+                        model = MLP(xtrain.shape[1], n_classes, j ,tab[i])  # WRITE YOUR CODE HERE
+                        method_obj = Trainer(
+                                model, lr=args.lr, epochs=args.max_iters, batch_size=args.nn_batch_size)
+                        # Model prediction
+                        index = i*j+j
+                        print("Running MLP with activation function:", tab[i], "and", j, "hidden layers")
+                        preds_train = method_obj.fit(xtrain, ytrain)
+                        train_acc[index] = accuracy_fn(preds_train, ytrain) # need a separation function for the validation set
+                        preds_val = method_obj.predict(xtrain)
+                        val_acc[index] = accuracy_fn(preds_val, ytest)
+
+                bestModel = np.argmax(val_acc)
+                bestActivation = tab[bestModel / len(tab)]
+                bestHidden = bestModel % len(tab)
+                
+                print("Train accuracy = ", train_acc)
+                print("Validation accuracy = ", val_acc)
+                print("Best activation function = ", bestActivation)
+                print("Best number of hidden layer = ", bestHidden)
+
+
+        elif args.nn_type == "cnn": 
             xtrain = xtrain.reshape(xtrain.shape[0], 1, 32, 32)
             xtest = xtest.reshape(xtest.shape[0], 1, 32, 32)
 
@@ -131,7 +164,7 @@ def main(args):
                     preds_train = method_obj.fit(xtrain, ytrain)
                     train_acc[it] = accuracy_fn(preds_train, ytrain)
                     preds_val = method_obj.predict(xtrain)
-                    val_acc[it] = accuracy_fn(preds_val, ytrain)
+                    val_acc[it] = accuracy_fn(preds_val, ytrain) # TODO ytest not ytrain
 
                 bestModel = np.argmax(val_acc)
                 print("Train accuracy = ", train_acc)
