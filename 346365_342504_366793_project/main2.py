@@ -111,7 +111,7 @@ def main(args):
         # Note: you might need to reshape the image data depending on the network you use!
         n_classes = get_n_classes(ytrain)
         if args.nn_type == "mlp":
-            nb_hidden = 20
+            nb_hidden = 10
 
             if not args.test:
                 tab = [F.relu, F.tanh, F.sigmoid]
