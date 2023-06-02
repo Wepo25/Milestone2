@@ -30,9 +30,27 @@ class MLP(nn.Module):
         # WRITE YOUR CODE HERE!
         ###
         ##
+        self.input_size = input_size
+        self.activationFunction = activationFunction
+        self.n_classes = n_classes
+        self.nbForward = nbLayer -1 
+        
+        self.layerDim = [0.] * nbLayer
 
-        self.fc1 = nn.Linear(input_size, 500)
-        self.fc2 = nn.Linear(500, n_classes)
+        self.layerDim[0] = input_size
+
+        for i in range(1, nbLayer -1) :
+            self.layerDim[i] = 2048
+        self.layerDim[-1] = n_classes
+
+        self.layer = [nn.Linear] * (self.nbForward)
+
+        for i in range(self.nbForward): 
+            self.layer[i] = nn.Linear(self.layerDim[i], self.layerDim[i+1])
+
+         
+
+        self.params = nn.ParameterList(self.layer)
 
 
 
@@ -57,8 +75,11 @@ class MLP(nn.Module):
         ##
         
     
-        x = F.relu(self.fc1(x))
-        return self.fc2(x)
+        for j in range(self.nbForward-1):
+            x = self.activationFunction(self.layer[j](x))
+
+        preds = self.layer[self.nbForward-1](x)
+        return preds
 
 
 class CNN(nn.Module):
