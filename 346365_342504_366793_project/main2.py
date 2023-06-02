@@ -112,8 +112,6 @@ def main(args):
         n_classes = get_n_classes(ytrain)
         if args.nn_type == "mlp":
             nb_hidden = 20
-            xtrain = xtrain.reshape(xtrain.shape[0], -1)
-            xtest = xtest.reshape(xtest.shape[0], -1)
 
             if not args.test:
                 tab = [F.relu, F.tanh, F.sigmoid]
@@ -141,7 +139,9 @@ def main(args):
                 print("Validation accuracy = ", val_acc)
                 print("Best activation function = ", bestActivation)
                 print("Best number of hidden layer = ", bestHidden)
-
+            else :
+                model = MLP(32*32, n_classes)
+                summary(model)
 
         elif args.nn_type == "cnn": 
             xtrain = xtrain.reshape(xtrain.shape[0], 1, 32, 32)
