@@ -40,7 +40,7 @@ class MLP(nn.Module):
         self.layerDim[0] = input_size
 
         for i in range(1, nbLayer -1) :
-            self.layerDim[i] = 2048
+            self.layerDim[i] = 1024
         self.layerDim[-1] = n_classes
 
         self.layer = [nn.Linear] * (self.nbForward)

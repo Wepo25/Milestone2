@@ -113,21 +113,22 @@ def main(args):
         if args.nn_type == "mlp":
             nb_hidden = 10
 
-            if not args.test:
+            if not args.test: # may take time to run
                 tab = [F.relu, F.tanh, F.sigmoid]
-                train_acc = np.empty(len(tab) * nb_hidden)
-                val_acc = np.empty(len(tab) * nb_hidden)  # use the validation to find the best lr
+                train_acc = np.empty(len(tab) * nb_hidden) 
+                val_acc = np.empty(len(tab) * nb_hidden)  # use the validation to find the best hyperparameters
                 
-                for i in range(len(tab)):
-                    for j in range(3 ,nb_hidden): # number of hideen layer maybe add a command line argument for this
-                        model = MLP(xtrain.shape[1], n_classes, j ,tab[i])  # WRITE YOUR CODE HERE
+                for i in range(len(tab)): # iteration over activation functions
+                    for j in range(3 ,nb_hidden): # iteration over hidden layers
+                        model = MLP(xtrain.shape[1], n_classes, j ,tab[i]) 
                         method_obj = Trainer(
                                 model, lr=args.lr, epochs=args.max_iters, batch_size=args.nn_batch_size)
                         # Model prediction
                         index = i*j+j
                         preds_train = method_obj.fit(xtrain, ytrain)
-                        train_acc[index] = accuracy_fn(preds_train, ytrain) # need a separation function for the validation set
-                        preds_val = method_obj.predict(xtrain)
+                        train_acc[index] = accuracy_fn(preds_train, ytrain)
+
+                        preds_val = method_obj.predict(xtest)
                         val_acc[index] = accuracy_fn(preds_val, ytest)
 
                 bestModel = np.argmax(val_acc)
@@ -139,7 +140,7 @@ def main(args):
                 print("Best activation function = ", bestActivation)
                 print("Best number of hidden layer = ", bestHidden)
             else :
-                model = MLP(32*32, n_classes)
+                model = MLP(32*32, n_classes, args.nn_nb_layers, F.relu)
                 summary(model)
 
         elif args.nn_type == "cnn": 
@@ -162,8 +163,8 @@ def main(args):
                     # Model prediction
                     preds_train = method_obj.fit(xtrain, ytrain)
                     train_acc[it] = accuracy_fn(preds_train, ytrain)
-                    preds_val = method_obj.predict(xtrain)
-                    val_acc[it] = accuracy_fn(preds_val, ytrain) # TODO ytest not ytrain
+                    preds_val = method_obj.predict(xtest)
+                    val_acc[it] = accuracy_fn(preds_val, ytest) 
 
                 bestModel = np.argmax(val_acc)
                 print("Train accuracy = ", train_acc)
@@ -253,6 +254,7 @@ if __name__ == '__main__':
 
     # WRITE YOUR CODE HERE: feel free to add more arguments here if you need!
 
+
     # MS2 arguments
     parser.add_argument('--use_pca', action="store_true", help="to enable PCA")
     parser.add_argument('--pca_d', type=int, default=200,
@@ -261,6 +263,8 @@ if __name__ == '__main__':
                         help="which network to use, can be 'mlp' or 'cnn'")
     parser.add_argument('--nn_batch_size', type=int,
                         default=64, help="batch size for NN training")
+    parser.add_argument('--nn_nb_layers', type=int,
+                        default=3, help="number of hidden layers")
 
     # "args" will keep in memory the arguments and their values,
     # which can be accessed as "args.data", for example.
