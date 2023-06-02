@@ -125,7 +125,6 @@ def main(args):
                                 model, lr=args.lr, epochs=args.max_iters, batch_size=args.nn_batch_size)
                         # Model prediction
                         index = i*j+j
-                        print("Running MLP with activation function:", tab[i], "and", j, "hidden layers")
                         preds_train = method_obj.fit(xtrain, ytrain)
                         train_acc[index] = accuracy_fn(preds_train, ytrain) # need a separation function for the validation set
                         preds_val = method_obj.predict(xtrain)
