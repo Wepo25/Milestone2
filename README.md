@@ -31,3 +31,8 @@ Convolutional Neural Network (CNN):
 Principal Component Analysis (PCA):
   - Purpose: PCA is used for dimensionality reduction.
   - Explanation: PCA can help reduce the computational burden and improve the efficiency of other algorithms by reducing the number of features while preserving as much variance as possible. It's particularly helpful when dealing with a large number of handwritten symbol features.
+
+# Detailed Report and Conclusion
+See reports in the project.
+
+
